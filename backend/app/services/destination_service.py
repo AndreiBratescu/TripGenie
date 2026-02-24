@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -27,4 +27,32 @@ def get_destinations_for_trip(
 def delete_destination(db: Session, destination: Destination) -> None:
     db.delete(destination)
     db.commit()
+
+
+def create_destinations_from_ai_output(
+    db: Session,
+    trip_id: int,
+    ai_destinations: List[dict[str, Any]],
+) -> List[Destination]:
+    created: List[Destination] = []
+
+    for item in ai_destinations:
+        destination = Destination(
+            trip_id=trip_id,
+            name=item.get("name", "Unknown destination"),
+            description=item.get("description"),
+            country=item.get("country"),
+            city=item.get("city"),
+            # The AI may return extra keys like `estimated_cost`, `best_season`,
+            # or `matching_interests` which we currently ignore at persistence time.
+        )
+        db.add(destination)
+        created.append(destination)
+
+    db.commit()
+
+    for destination in created:
+        db.refresh(destination)
+
+    return created
 

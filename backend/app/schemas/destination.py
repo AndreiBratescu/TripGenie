@@ -49,3 +49,9 @@ class DestinationInDBBase(DestinationBase):
 class Destination(DestinationInDBBase):
     pass
 
+
+class DestinationAIRequest(BaseModel):
+    budget: float = Field(..., gt=0)
+    season: str = Field(..., min_length=1)
+    interests: str = Field(..., min_length=1, description="Comma-separated interests")
+

@@ -1,4 +1,9 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { Button } from "../components/Button";
+import { EmptyState } from "../components/EmptyState";
+import { useToast } from "../components/ToastProvider";
+import { Card } from "../components/Card";
 
 type Trip = {
   id: number;
@@ -21,22 +26,27 @@ type Destination = {
   departure_date?: string | null;
 };
 
-type TripDetailsPageProps = {
-  tripId: number;
-};
-
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
-export function TripDetailsPage({ tripId }: TripDetailsPageProps) {
+type RouteParams = {
+  id?: string;
+};
+
+export function TripDetailsPage() {
+  const { id } = useParams<RouteParams>();
+  const tripId = Number(id);
+
   const [trip, setTrip] = useState<Trip | null>(null);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
+    if (!tripId) return;
+
     const fetchData = async () => {
       setLoading(true);
       setError(null);
@@ -89,8 +99,12 @@ export function TripDetailsPage({ tripId }: TripDetailsPageProps) {
   const handleGenerateAiDestinations = async () => {
     if (!trip) return;
 
+    const proceed = window.confirm(
+      "Generate AI destinations for this trip? Existing destinations will be kept."
+    );
+    if (!proceed) return;
+
     setAiLoading(true);
-    setAiError(null);
 
     const payload = {
       budget: trip.budget ?? 1000,
@@ -113,31 +127,63 @@ export function TripDetailsPage({ tripId }: TripDetailsPageProps) {
       if (!res.ok) {
         const body = await res.text();
         throw new Error(
-          `AI generation failed (HTTP ${res.status})${
-            body ? `: ${body}` : ""
+          `AI generation failed (HTTP ${res.status})${body ? `: ${body}` : ""
           }`
         );
       }
 
       await refreshDestinations();
+      showToast("AI destinations generated.", "success");
     } catch (err) {
-      setAiError((err as Error).message);
+      const message = (err as Error).message;
+      showToast(message, "error");
     } finally {
       setAiLoading(false);
     }
   };
 
+  const handleDeleteDestination = async (destinationId: number) => {
+    if (!window.confirm("Delete this destination? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/trips/${tripId}/destinations/${destinationId}`,
+        {
+          method: "DELETE"
+        }
+      );
+      if (!res.ok) {
+        throw new Error(`Failed to delete destination (HTTP ${res.status})`);
+      }
+      setDestinations((prev) => prev.filter((d) => d.id !== destinationId));
+      showToast("Destination deleted.", "success");
+    } catch (err) {
+      const message = (err as Error).message;
+      showToast(message, "error");
+    }
+  };
+
+  if (!tripId || Number.isNaN(tripId)) {
+    return (
+      <div className="bg-red-50 border border-red-200 px-6 py-6 text-sm font-medium text-tg-danger m-12 rounded-sm">
+        Invalid trip id.
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <div className="flex justify-center py-10 text-slate-300">
-        Loading trip…
+      <div className="flex justify-center py-20 text-lg font-medium text-tg-muted text-center">
+        Loading trip...
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+      <div className="bg-red-50 border border-red-200 px-6 py-6 text-sm font-medium text-tg-danger m-12 rounded-sm">
         {error}
       </div>
     );
@@ -145,115 +191,141 @@ export function TripDetailsPage({ tripId }: TripDetailsPageProps) {
 
   if (!trip) {
     return (
-      <div className="rounded-xl border border-white/10 bg-slate-900/40 px-4 py-3 text-sm text-slate-300">
+      <div className="bg-white border border-gray-200 px-6 py-6 text-sm font-medium text-tg-dark m-12 rounded-sm">
         Trip not found.
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {trip.name}
-            </h1>
+    <div className="flex flex-col min-h-full">
+      {/* TRiP INFO SECTION */}
+      <section className="bg-tg-brand text-white px-6 py-12 md:px-12 md:py-20">
+        <div className="mx-auto max-w-6xl">
+          <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight mb-6 max-w-4xl">
+            {trip.name}
+          </h1>
+
+          <div className="flex flex-wrap gap-3 mt-6">
             {trip.season && (
-              <p className="mt-1 text-xs uppercase tracking-wide text-slate-400">
+              <span className="bg-white/20 px-3 py-1.5 text-xs font-semibold tracking-wide rounded-sm uppercase">
                 {trip.season}
-              </p>
+              </span>
+            )}
+            {trip.start_date && trip.end_date && (
+              <span className="bg-white/20 px-3 py-1.5 text-xs font-semibold tracking-wide rounded-sm uppercase">
+                {new Date(trip.start_date).toLocaleDateString()} –{" "}
+                {new Date(trip.end_date).toLocaleDateString()}
+              </span>
+            )}
+            {trip.budget != null && (
+              <span className="bg-tg-highlight text-tg-dark px-3 py-1.5 text-xs font-semibold tracking-wide rounded-sm uppercase">
+                Budget: ${trip.budget.toLocaleString()}
+              </span>
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={handleGenerateAiDestinations}
-            disabled={aiLoading}
-            className="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm shadow-indigo-500/40 transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {aiLoading ? "Generating…" : "Generate AI destinations"}
-          </button>
-        </div>
-
-        {aiError && (
-          <p className="mt-2 text-xs text-red-300">{aiError}</p>
-        )}
-        {trip.interests && (
-          <p className="mt-2 text-xs text-slate-300">
-            Interests: {trip.interests}
-          </p>
-        )}
-        {trip.description && (
-          <p className="mt-4 text-sm text-slate-200">{trip.description}</p>
-        )}
-
-        <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-300">
-          {trip.start_date && trip.end_date && (
-            <span className="rounded-full border border-white/10 bg-slate-900/60 px-3 py-1">
-              {new Date(trip.start_date).toLocaleDateString()} –{" "}
-              {new Date(trip.end_date).toLocaleDateString()}
-            </span>
-          )}
-          {trip.budget != null && (
-            <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-emerald-200">
-              Budget: ${trip.budget.toLocaleString()}
-            </span>
+          {(trip.description || trip.interests) && (
+            <div className="mt-8 grid gap-8 md:grid-cols-2 max-w-4xl bg-white text-tg-dark p-6 md:p-8 rounded-sm">
+              {trip.description && (
+                <div>
+                  <h3 className="text-xs font-bold tracking-widest text-tg-muted uppercase mb-1">Description</h3>
+                  <p className="text-base font-medium text-tg-dark/90 leading-relaxed">{trip.description}</p>
+                </div>
+              )}
+              {trip.interests && (
+                <div>
+                  <h3 className="text-xs font-bold tracking-widest text-tg-muted uppercase mb-1">Interests</h3>
+                  <p className="text-base font-medium text-tg-dark/90 leading-relaxed">{trip.interests}</p>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </section>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold tracking-tight">
-            Destinations
-          </h2>
-          <span className="text-xs text-slate-400">
-            {destinations.length} destination
-            {destinations.length === 1 ? "" : "s"}
-          </span>
-        </div>
+      {/* GENERATE AI SUGGESTIONS SECTION */}
+      <section className="bg-tg-action text-white px-6 py-16 md:px-12 md:py-24 flex flex-col items-center justify-center text-center">
+        <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 max-w-2xl leading-tight">
+          Enhance this trip with AI
+        </h2>
+        <p className="text-lg md:text-xl font-medium text-white/90 mb-8 max-w-2xl">
+          Get custom destination recommendations tailored specifically to your budget and interests.
+        </p>
+        <Button
+          size="lg"
+          variant="secondary"
+          loading={aiLoading}
+          onClick={handleGenerateAiDestinations}
+          className="bg-white text-tg-action hover:bg-gray-100 hover:-translate-y-1 shadow-sm"
+        >
+          {aiLoading ? "GENERATING DESTINATIONS..." : "GENERATE SUGGESTIONS"}
+        </Button>
+      </section>
 
-        {destinations.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-slate-900/40 px-4 py-3 text-sm text-slate-300">
-            No destinations for this trip yet.
+      {/* DESTINATIONS SECTION */}
+      <section className="bg-tg-page px-6 py-16 md:px-12 md:py-20">
+        <div className="mx-auto max-w-6xl space-y-8">
+          <div className="flex items-end justify-between border-b border-gray-200 pb-4">
+            <h2 className="text-3xl font-bold tracking-tight text-tg-dark">
+              Destinations
+            </h2>
+            <span className="text-sm font-semibold text-tg-muted bg-gray-100 px-3 py-1 rounded-sm">
+              {destinations.length} destination{destinations.length === 1 ? "" : "s"}
+            </span>
           </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {destinations.map((dest) => (
-              <article
-                key={dest.id}
-                className="flex flex-col rounded-2xl border border-white/10 bg-slate-900/60 p-5"
-              >
-                <header className="mb-1">
-                  <h3 className="text-base font-medium tracking-tight">
-                    {dest.name}
-                  </h3>
-                  {(dest.city || dest.country) && (
-                    <p className="mt-1 text-xs text-slate-400">
-                      {[dest.city, dest.country].filter(Boolean).join(", ")}
+
+          {destinations.length === 0 ? (
+            <div className="py-8">
+              <EmptyState
+                title="No destinations yet"
+                description="Click generation above, or build your own itinerary."
+              />
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {destinations.map((dest) => (
+                <Card key={dest.id} className="flex flex-col min-h-[250px]">
+                  <header className="mb-3">
+                    <h3 className="text-xl font-bold tracking-tight mb-1 text-tg-dark">
+                      {dest.name}
+                    </h3>
+                    {(dest.city || dest.country) && (
+                      <p className="text-sm font-semibold text-tg-muted">
+                        {[dest.city, dest.country].filter(Boolean).join(", ")}
+                      </p>
+                    )}
+                  </header>
+
+                  {dest.description && (
+                    <p className="mb-6 text-sm font-normal text-tg-muted flex-1 leading-relaxed">
+                      {dest.description}
                     </p>
                   )}
-                </header>
 
-                {dest.description && (
-                  <p className="mb-3 text-sm text-slate-300">
-                    {dest.description}
-                  </p>
-                )}
-
-                {dest.arrival_date && dest.departure_date && (
-                  <p className="mt-auto text-xs text-slate-400">
-                    {new Date(dest.arrival_date).toLocaleDateString()} –{" "}
-                    {new Date(dest.departure_date).toLocaleDateString()}
-                  </p>
-                )}
-              </article>
-            ))}
-          </div>
-        )}
+                  <div className="mt-auto pt-4 border-t border-gray-100 flex flex-col gap-3">
+                    {dest.arrival_date && dest.departure_date && (
+                      <p className="text-xs font-semibold tracking-wide text-tg-muted">
+                        {new Date(dest.arrival_date).toLocaleDateString()} –{" "}
+                        {new Date(dest.departure_date).toLocaleDateString()}
+                      </p>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void handleDeleteDestination(dest.id)}
+                      className="text-tg-danger bg-red-50 hover:bg-red-100 w-full"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );
 }
-

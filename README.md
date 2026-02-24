@@ -13,11 +13,45 @@ No external UI libraries; the web app uses a flat design system with shared comp
 
 ## Features
 
-- **Dashboard** (`/`) — Grid of trip cards, “Create Trip” primary action, delete trips, empty state.
-- **Create Trip** (`/create`) — Form: Title, Budget, Season (dropdown), Interests, Description; submit creates a trip and redirects to its details.
-- **Trip Details** (`/trip/:id`) — Trip info, prominent “Generate AI Suggestions” button (Gemini), loading state, grid of destination cards, delete destinations, empty state.
+### Dashboard (`/`)
 
-API: full CRUD for trips and destinations; AI destination generation via Gemini.
+- **Trip grid** — All trips shown in a responsive card grid. Each card displays title, season, optional description, date range, and budget.
+- **Create Trip** — Primary button in the header opens the Create Trip page.
+- **Open a trip** — Clicking a card navigates to that trip’s details page (`/trip/:id`).
+- **Delete trip** — Each card has a Delete button; confirmation dialog before removal. List refreshes after delete.
+- **Empty state** — When there are no trips, a message and icon explain that the user can create their first trip.
+- **Loading & errors** — Loading message while fetching; inline error message if the API fails.
+
+### Create Trip (`/create`)
+
+- **Form fields** — Title (required), Start date, End date, Budget (USD), Season (dropdown: Spring / Summer / Autumn / Winter), Interests (comma‑separated), Description (optional).
+- **Validation** — Client-side checks: title required, budget non‑negative, end date not before start date. Errors shown inline and via toast.
+- **Submit** — Sends `POST /api/v1/trips` with the trip payload. On success, shows a success toast and redirects to the new trip’s details page (`/trip/:id`).
+- **Loading state** — Submit button shows a spinner and “Create trip” label while the request is in progress.
+
+### Trip Details (`/trip/:id`)
+
+- **Trip info block** — Displays trip title, season, interests, date range, budget, and description in a clear section.
+- **Generate AI Suggestions** — Prominent primary button that calls the backend to generate up to three AI destinations (Gemini) using the trip’s budget, season, and interests. Confirmation dialog before running. New destinations are created and saved to the trip; the list refreshes automatically.
+- **Loading state** — Button shows a spinner and “Generating…” while the AI request runs. Errors surface via toast.
+- **Destinations grid** — All destinations for the trip in a responsive card grid. Each card shows name, city/country, description, and date range.
+- **Delete destination** — Each destination card has a Delete button; confirmation before removal. List updates and a success toast is shown.
+- **Empty state** — When there are no destinations, a short message suggests using AI suggestions or adding destinations manually.
+- **Invalid or missing trip** — Invalid `id` or 404 shows a clear error message.
+
+### API (Backend)
+
+- **Trips** — `GET /api/v1/trips` (list), `GET /api/v1/trips/{id}` (one), `POST /api/v1/trips` (create), `PUT /api/v1/trips/{id}` (update), `DELETE /api/v1/trips/{id}` (delete).
+- **Destinations** — `GET /api/v1/trips/{id}/destinations` (list), `POST /api/v1/trips/{id}/destinations/ai-generate` (create from AI; body: `budget`, `season`, `interests`), `DELETE /api/v1/trips/{id}/destinations/{destination_id}` (delete).
+- **Database** — SQLite by default; Trip and Destination models with foreign key relationship; tables created on app startup.
+- **AI** — Gemini API used for destination suggestions; requires `GEMINI_API_KEY` in environment or `.env`.
+
+### UX and consistency
+
+- **Toasts** — Success and error notifications (e.g. “Trip created”, “Destination deleted”, API errors) appear briefly without blocking the UI.
+- **Confirmations** — Destructive actions (delete trip, delete destination, run AI generation) use browser `confirm` dialogs.
+- **Responsive layout** — Dashboard and Trip Details use responsive grids; Create Trip form and headers adapt to small screens.
+- **Design system** — Shared Button, Card, Input, PageHeader, and EmptyState components keep the UI consistent and easy to maintain.
 
 ## Prerequisites
 

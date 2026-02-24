@@ -1,6 +1,7 @@
 from datetime import datetime, date
 
 from sqlalchemy import Column, Date, DateTime, Float, Integer, String, Text, func
+from sqlalchemy.orm import relationship
 
 from backend.app.db.session import Base
 
@@ -23,5 +24,12 @@ class Trip(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+
+    destinations = relationship(
+        "Destination",
+        back_populates="trip",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 

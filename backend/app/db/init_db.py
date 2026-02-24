@@ -1,5 +1,6 @@
 from backend.app.db.session import Base, engine
 from backend.app.models import trip  # noqa: F401
+from backend.app.models import destination  # noqa: F401
 
 
 def init_db() -> None:

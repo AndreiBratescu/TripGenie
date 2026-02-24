@@ -214,8 +214,8 @@ export function TripDetailsPage() {
             )}
             {trip.start_date && trip.end_date && (
               <span className="bg-white/20 px-3 py-1.5 text-xs font-semibold tracking-wide rounded-sm uppercase">
-                {new Date(trip.start_date).toLocaleDateString()} –{" "}
-                {new Date(trip.end_date).toLocaleDateString()}
+                {new Date(trip.start_date).toLocaleDateString("en-GB")} –{" "}
+                {new Date(trip.end_date).toLocaleDateString("en-GB")}
               </span>
             )}
             {trip.budget != null && (
@@ -306,8 +306,8 @@ export function TripDetailsPage() {
                   <div className="mt-auto pt-4 border-t border-gray-100 flex flex-col gap-3">
                     {dest.arrival_date && dest.departure_date && (
                       <p className="text-xs font-semibold tracking-wide text-tg-muted">
-                        {new Date(dest.arrival_date).toLocaleDateString()} –{" "}
-                        {new Date(dest.departure_date).toLocaleDateString()}
+                        {new Date(dest.arrival_date).toLocaleDateString("en-GB")} –{" "}
+                        {new Date(dest.departure_date).toLocaleDateString("en-GB")}
                       </p>
                     )}
                     <Button

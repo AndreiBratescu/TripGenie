@@ -1,4 +1,7 @@
 import { FormEvent, useState } from "react";
+import { useToast } from "./ToastProvider";
+import { Button } from "./Button";
+import { TextInput, SelectInput, TextAreaInput } from "./Input";
 
 type TripFormValues = {
   name: string;
@@ -11,7 +14,7 @@ type TripFormValues = {
 };
 
 type TripFormProps = {
-  onCreated?: () => void;
+  onCreated?: (tripId: number) => void;
 };
 
 const API_BASE =
@@ -29,16 +32,19 @@ export function TripForm({ onCreated }: TripFormProps) {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | React.ChangeEvent<HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setValues((prev) => ({ ...prev, [name]: value }));
   };
 
   const validate = (): string | null => {
-    if (!values.name.trim()) return "Name is required.";
+    if (!values.name.trim()) return "Title is required.";
 
     if (values.budget) {
       const num = Number(values.budget);
@@ -89,11 +95,12 @@ export function TripForm({ onCreated }: TripFormProps) {
       if (!res.ok) {
         const body = await res.text();
         throw new Error(
-          `Failed to create trip (HTTP ${res.status})${
-            body ? `: ${body}` : ""
+          `Failed to create trip (HTTP ${res.status})${body ? `: ${body}` : ""
           }`
         );
       }
+
+      const created: { id: number } = await res.json();
 
       setValues({
         name: "",
@@ -105,9 +112,12 @@ export function TripForm({ onCreated }: TripFormProps) {
         interests: ""
       });
 
-      if (onCreated) onCreated();
+      showToast("Trip created successfully.", "success");
+      if (onCreated) onCreated(created.id);
     } catch (err) {
-      setError((err as Error).message);
+      const message = (err as Error).message;
+      setError(message);
+      showToast(message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -116,125 +126,96 @@ export function TripForm({ onCreated }: TripFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-6"
+      className="space-y-6 bg-white border border-gray-200 p-8 md:p-10 rounded-sm"
     >
-      <h2 className="text-lg font-semibold tracking-tight">Create a trip</h2>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold tracking-tight text-tg-dark">
+          Trip Details
+        </h2>
+      </div>
 
       {error && (
-        <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-100">
+        <div className="bg-red-50 border border-red-200 px-4 py-3 text-sm font-medium text-tg-danger rounded-sm">
           {error}
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         <div className="md:col-span-2">
-          <label className="block text-xs font-medium text-slate-200">
-            Name<span className="text-red-400">*</span>
-          </label>
-          <input
-            type="text"
+          <TextInput
+            label="Title"
             name="name"
+            required
+            placeholder="Summer in Italy"
             value={values.name}
             onChange={handleChange}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-0 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/40"
-            placeholder="Summer in Italy"
-            required
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-slate-200">
-            Start date
-          </label>
-          <input
-            type="date"
-            name="start_date"
-            value={values.start_date}
-            onChange={handleChange}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-0 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/40"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-slate-200">
-            End date
-          </label>
-          <input
-            type="date"
-            name="end_date"
-            value={values.end_date}
-            onChange={handleChange}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-0 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/40"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-slate-200">
-            Budget (USD)
-          </label>
-          <input
-            type="number"
-            min={0}
-            step="0.01"
-            name="budget"
-            value={values.budget}
-            onChange={handleChange}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-0 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/40"
-            placeholder="1500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-slate-200">
-            Season
-          </label>
-          <input
-            type="text"
-            name="season"
-            value={values.season}
-            onChange={handleChange}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-0 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/40"
-            placeholder="summer, winter, ..."
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium text-slate-200">
-          Interests
-        </label>
-        <input
-          type="text"
-          name="interests"
-          value={values.interests}
+        <TextInput
+          label="Start date"
+          type="date"
+          name="start_date"
+          value={values.start_date}
           onChange={handleChange}
-          className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-0 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/40"
-          placeholder="beach, food, history"
         />
-      </div>
 
-      <div>
-        <label className="block text-xs font-medium text-slate-200">
-          Description
-        </label>
-        <textarea
-          name="description"
-          value={values.description}
+        <TextInput
+          label="End date"
+          type="date"
+          name="end_date"
+          value={values.end_date}
           onChange={handleChange}
-          rows={3}
-          className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-0 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/40"
-          placeholder="Short summary of the trip."
         />
+
+        <TextInput
+          label="Budget (USD)"
+          type="number"
+          min={0}
+          step="0.01"
+          name="budget"
+          placeholder="1500"
+          value={values.budget}
+          onChange={handleChange}
+        />
+
+        <SelectInput
+          label="Season"
+          name="season"
+          value={values.season}
+          onChange={handleChange}
+        >
+          <option value="">Select season</option>
+          <option value="spring">Spring</option>
+          <option value="summer">Summer</option>
+          <option value="autumn">Autumn</option>
+          <option value="winter">Winter</option>
+        </SelectInput>
       </div>
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-indigo-500/40 transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {submitting ? "Creating..." : "Create trip"}
-      </button>
+      <TextInput
+        label="Interests"
+        name="interests"
+        placeholder="beach, food, history"
+        value={values.interests}
+        onChange={handleChange}
+        hint="Comma separated keywords"
+      />
+
+      <TextAreaInput
+        label="Description"
+        name="description"
+        rows={3}
+        placeholder="Short summary of the trip."
+        value={values.description}
+        onChange={handleChange}
+      />
+
+      <div className="pt-6">
+        <Button size="lg" type="submit" loading={submitting} className="w-full text-center">
+          CREATE ITINERARY
+        </Button>
+      </div>
     </form>
   );
 }
-

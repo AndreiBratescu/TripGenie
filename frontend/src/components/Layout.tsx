@@ -11,32 +11,30 @@ export function Layout({ title = "TripGenie", children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-tg-page text-tg-dark font-sans selection:bg-tg-highlight selection:text-tg-dark flex flex-col">
-      <header className="bg-tg-brand text-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-12">
-          <Link to="/" className="group flex items-center gap-4 transition-transform hover:scale-105">
-            <div className="flex h-12 w-12 items-center justify-center bg-white text-tg-brand text-xl font-bold tracking-tighter rounded-sm">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="mx-auto flex flex-wrap max-w-6xl items-center justify-between px-6 py-4 md:px-12 gap-4">
+          <Link to="/" className="group flex items-center transition-transform hover:-translate-y-0.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-tg-brand text-white text-lg font-bold tracking-tighter rounded-sm group-hover:bg-tg-action transition-colors">
               TG
-            </div>
-            <div className="flex flex-col justify-center leading-none">
-              <span className="text-sm font-semibold tracking-wider text-white/80">
-                TRIPGENIE
-              </span>
-              <span className="mt-1 text-xl font-bold">
-                {title}
-              </span>
             </div>
           </Link>
 
-          <nav className="flex items-center gap-8">
+          <nav className="flex items-center gap-16 sm:gap-24 overflow-x-auto whitespace-nowrap">
             <Link
               to="/"
-              className={`text-sm font-semibold tracking-wide hover:text-tg-highlight transition-colors ${location.pathname === '/' ? 'text-tg-highlight' : 'text-white'}`}
+              className={`inline-flex items-center justify-center px-6 py-3 text-sm font-bold text-black rounded-sm transition-transform duration-200 ease-in-out hover:-translate-y-0.5 border ${location.pathname === '/'
+                ? 'bg-tg-brand border-tg-brand shadow-sm text-black'
+                : 'bg-white border-gray-200 hover:bg-gray-50'
+                }`}
             >
               Dashboard
             </Link>
             <Link
               to="/create"
-              className={`text-sm font-semibold tracking-wide hover:text-tg-highlight transition-colors ${location.pathname === '/create' ? 'text-tg-highlight' : 'text-white'}`}
+              className={`inline-flex items-center justify-center px-6 py-3 text-sm font-bold text-black rounded-sm transition-transform duration-200 ease-in-out hover:-translate-y-0.5 border ${location.pathname === '/create'
+                ? 'bg-tg-action border-tg-action shadow-sm text-black'
+                : 'bg-white border-gray-200 hover:bg-gray-50'
+                }`}
             >
               Create Trip
             </Link>

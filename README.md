@@ -8,17 +8,17 @@
 
 ## LLMs and tools used to build it
 
-- **Cursor** (AI-assisted editor) for implementation, refactors, and debugging.
-- **Google Gemini API** (REST, `gemini-flash-latest`) for generating destination suggestions from budget, season, and interests.
+- **Cursor** (GPT 5.2 High) for implementation, refactors, and debugging.
+- **Google Antigravity** (Gemini 3.1 Pro) for UI and UX.
 - **Stack:** Backend: FastAPI, SQLAlchemy, SQLite, httpx. Frontend: React (Vite), TypeScript, TailwindCSS, React Router. No external UI libraries.
 
 ---
 
 ## One technical hurdle and how I prompted through it
 
-**Hurdle:** The Gemini API sometimes returned JSON wrapped in markdown code fences (e.g. ` ```json ... ``` `) or with extra prose, so `json.loads()` raised `JSONDecodeError` and the “Generate AI Suggestions” flow failed.
+**Hurdle:** Both Gemini 3.1 Pro and GPT 5.2 could not redesign from scratch the UI to look more polished.
 
-**What I did:** I prompted the assistant to (1) request **raw JSON only** in the system/user prompt (e.g. “Respond with JSON only, no extra text”), and (2) use the Gemini **structured output** option so the model is constrained to JSON. In code, that meant setting `responseMimeType: "application/json"` in the `generationConfig` of the Gemini request. After that, the API returned parseable JSON consistently and the feature worked reliably.
+**What I did:** I prompted Gemini 3.1 Pro to match keywords such as Flat Design or Material Design instead.
 
 ---
 

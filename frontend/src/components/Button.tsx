@@ -16,24 +16,24 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center gap-2 font-semibold transition-transform duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tg-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 hover:-translate-y-0.5";
+    "inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tg-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 hover:-translate-y-0.5 shadow-sm hover:shadow-md active:shadow-sm active:translate-y-0";
 
   const sizes: Record<NonNullable<ButtonProps["size"]>, string> = {
-    sm: "px-3 py-1.5 text-xs rounded-sm",
-    md: "px-5 py-2.5 text-sm rounded-sm",
-    lg: "px-6 py-4 text-base rounded-sm",
-    xl: "px-10 py-5 text-lg rounded-sm"
+    sm: "px-3 py-1.5 text-xs rounded-full",
+    md: "px-5 py-2.5 text-sm rounded-full",
+    lg: "px-6 py-3.5 text-base rounded-full",
+    xl: "px-10 py-4 text-lg rounded-full"
   };
 
   const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
     primary:
-      "bg-tg-brand text-white",
+      "bg-tg-brand text-white hover:bg-indigo-500 active:bg-indigo-600",
     secondary:
-      "bg-gray-100 text-tg-dark hover:bg-gray-200",
+      "bg-tg-surface text-tg-dark border border-tg-border hover:bg-gray-50",
     action:
-      "bg-tg-action text-white",
+      "bg-tg-action text-white hover:bg-rose-500 active:bg-rose-600",
     danger:
-      "bg-tg-danger text-white",
+      "bg-tg-danger text-white hover:bg-red-500 active:bg-red-600",
     ghost:
       "bg-transparent text-tg-dark hover:bg-gray-100"
   };

@@ -14,7 +14,8 @@ type BaseFieldProps = {
 type TextInputProps = BaseFieldProps &
   InputHTMLAttributes<HTMLInputElement>;
 
-const baseInput = "mt-2 w-full bg-gray-50 border border-gray-200 px-4 py-3 text-sm font-medium text-tg-dark placeholder:text-gray-400 outline-none transition-colors duration-200 focus:bg-white focus:border-tg-brand focus:ring-1 focus:ring-tg-brand rounded-sm";
+const baseInput =
+  "mt-2 w-full bg-tg-surface border border-tg-border px-4 py-3 text-sm font-medium text-tg-dark placeholder:text-gray-400 outline-none transition-all duration-200 rounded-lg shadow-sm focus:border-tg-brand focus:ring-2 focus:ring-tg-brand/70 focus:bg-white";
 
 export function TextInput({ label, hint, error, className = "", ...props }: TextInputProps) {
   return (

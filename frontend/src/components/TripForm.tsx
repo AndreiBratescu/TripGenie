@@ -20,6 +20,18 @@ type TripFormProps = {
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
+function inferSeasonFromDateString(dateStr: string | undefined): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  const month = d.getMonth() + 1; // 1-12
+
+  if (month >= 3 && month <= 5) return "spring";
+  if (month >= 6 && month <= 8) return "summer";
+  if (month >= 9 && month <= 11) return "autumn";
+  return "winter"; // Dec, Jan, Feb
+}
+
 export function TripForm({ onCreated }: TripFormProps) {
   const [values, setValues] = useState<TripFormValues>({
     name: "",
@@ -32,6 +44,7 @@ export function TripForm({ onCreated }: TripFormProps) {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [seasonTouched, setSeasonTouched] = useState(false);
   const { showToast } = useToast();
 
   const handleChange = (
@@ -40,7 +53,25 @@ export function TripForm({ onCreated }: TripFormProps) {
       | React.ChangeEvent<HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setValues((prev) => ({ ...prev, [name]: value }));
+    setValues((prev) => {
+      const next = { ...prev, [name]: value };
+
+      if (name === "season") {
+        setSeasonTouched(true);
+        return next;
+      }
+
+      // Auto-select season based on dates if user hasn't manually chosen one.
+      if ((name === "start_date" || name === "end_date") && !seasonTouched) {
+        const sourceDate = next.start_date || next.end_date;
+        const inferred = inferSeasonFromDateString(sourceDate);
+        if (inferred) {
+          next.season = inferred;
+        }
+      }
+
+      return next;
+    });
   };
 
   const validate = (): string | null => {

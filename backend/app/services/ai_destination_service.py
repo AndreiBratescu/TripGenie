@@ -27,7 +27,7 @@ def generate_destinations_from_ai(
     model: str = GEMINI_MODEL,
 ) -> List[dict[str, Any]]:
     """
-    Call the Gemini API to generate 3 destinations in JSON format
+    Call the Gemini API to generate 1 destination in JSON format
     based on budget, season and comma-separated interests.
     """
 
@@ -42,7 +42,8 @@ def generate_destinations_from_ai(
     prompt = (
         "You are a travel planner. "
         "Given a budget (in USD), a travel season, and comma-separated interests, "
-        "return exactly 3 destination suggestions as a JSON array. "
+        "return exactly 1 destination suggestion as a JSON array with a single element. "
+        "The JSON array must contain exactly one destination object. "
         "Each destination must be an object with these keys: "
         "`name` (string), `country` (string), `city` (string), "
         "`estimated_cost` (number), `best_season` (string), "
